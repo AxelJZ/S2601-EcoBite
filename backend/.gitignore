@@ -1,12 +1,22 @@
-# compiled output
-/dist
-/node_modules
-/build
+# Dependencies
+node_modules/
 
-# Prisma Client lives under node_modules/.prisma after `npx prisma generate`
+# Build output
+dist/
+build/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Test coverage
+coverage/
+coverage-e2e/
+.nyc_output/
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 pnpm-debug.log*
@@ -14,16 +24,24 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# OS
-.DS_Store
+# TypeScript
+*.tsbuildinfo
 
-# Tests
-/coverage
-/coverage-e2e
-/.nyc_output
+# Temporary files
+.temp/
+.tmp/
 
-# IDEs and editors
-/.idea
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# IDE / Editors
+.idea/
 .project
 .classpath
 .c9/
@@ -31,29 +49,13 @@ lerna-debug.log*
 .settings/
 *.sublime-workspace
 
-# IDE - VSCode
+# VS Code
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
-
-# temp directory
-.temp
-.tmp
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Diagnostic reports (https://nodejs.org/api/report.html)
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+# OS
+.DS_Store
+Thumbs.db
