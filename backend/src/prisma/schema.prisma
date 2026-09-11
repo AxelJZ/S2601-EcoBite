@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  SUPERVISOR
+  INSTALLER
+}
+
+enum OrderType {
+  INSTALLATION
+  RELOCATION
+  REPAIR
+  UNINSTALL
+  UPGRADE
+}
+
+enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUST
+}
+
+enum NotificationType {
+  ORDER_ASSIGNED
+  ORDER_UPDATED
+  LOW_STOCK
+  GENERAL
+}
+
+enum RefreshSessionStatus {
+  ACTIVE
+  REPLACED
+  REVOKED
+}
+
+model User {
+  id              String           @id @default(uuid())
+  name            String
+  email           String           @unique
+  password        String
+  phone           String?
+  role            Role             @default(INSTALLER)
+  active          Boolean          @default(true)
+  lastLoginAt     DateTime?
+  orders          Order[]
+  notes           OrderNote[]
+  stockMovements  StockMovement[]
+  notifications   Notification[]
+  refreshSessions RefreshSession[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("users")
+}
+
+model RefreshSession {
+  id        String               @id @default(uuid())
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  tokenHash String               @unique
+  familyId  String
+  status    RefreshSessionStatus @default(ACTIVE)
+  expiresAt DateTime
+  createdAt DateTime             @default(now())
+
+  @@index([userId, familyId])
+  @@index([familyId])
+  @@map("refresh_sessions")
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  city      String?
+  province  String?
+  zipCode   String?
+  lat       Float?
+  lng       Float?
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("customers")
+}
+
+model Order {
+  id          String           @id @default(uuid())
+  title       String
+  description String?
+  type        OrderType
+  status      OrderStatus      @default(PENDING)
+  address     String?
+  city        String?
+  province    String?
+  zipCode     String?
+  lat         Float?
+  lng         Float?
+  scheduledAt DateTime?
+  installer   User?            @relation(fields: [installerId], references: [id])
+  installerId String?
+  customer    Customer?        @relation(fields: [customerId], references: [id])
+  customerId  String?
+  equipment   OrderEquipment[]
+  notes       OrderNote[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@map("orders")
+}
+
+model EquipmentCategory {
+  id        String      @id @default(uuid())
+  name      String      @unique
+  active    Boolean     @default(true)
+  equipment Equipment[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@map("equipment_categories")
+}
+
+model Unit {
+  id           String      @id @default(uuid())
+  name         String      @unique
+  abbreviation String?
+  active       Boolean     @default(true)
+  equipment    Equipment[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@map("units")
+}
+
+model Equipment {
+  id         String            @id @default(uuid())
+  name       String
+  category   EquipmentCategory @relation(fields: [categoryId], references: [id])
+  categoryId String
+  unit       Unit              @relation(fields: [unitId], references: [id])
+  unitId     String
+  stock      WarehouseStock[]
+  orders     OrderEquipment[]
+  movements  StockMovement[]
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@map("equipment")
+}
+
+model OrderEquipment {
+  order       Order     @relation(fields: [orderId], references: [id])
+  orderId     String
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+  equipmentId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+  warehouseId String
+  quantity    Int
+
+  @@id([orderId, equipmentId])
+  @@map("order_equipment")
+}
+
+model Warehouse {
+  id             String           @id @default(uuid())
+  name           String
+  address        String?
+  city           String?
+  province       String?
+  active         Boolean          @default(true)
+  stock          WarehouseStock[]
+  movements      StockMovement[]
+  orderEquipment OrderEquipment[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@map("warehouses")
+}
+
+model WarehouseStock {
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+  warehouseId String
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+  equipmentId String
+  stock       Int       @default(0)
+  minStock    Int       @default(0)
+
+  @@id([warehouseId, equipmentId])
+  @@map("warehouse_stock")
+}
+
+model StockMovement {
+  id          String       @id @default(uuid())
+  equipment   Equipment    @relation(fields: [equipmentId], references: [id])
+  equipmentId String
+  warehouse   Warehouse    @relation(fields: [warehouseId], references: [id])
+  warehouseId String
+  user        User         @relation(fields: [userId], references: [id])
+  userId      String
+  type        MovementType
+  quantity    Int
+  note        String?
+  createdAt   DateTime     @default(now())
+
+  @@map("stock_movements")
+}
+
+model OrderNote {
+  id        String   @id @default(uuid())
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  @@map("order_notes")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  user      User             @relation(fields: [userId], references: [id])
+  userId    String
+  type      NotificationType @default(GENERAL)
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@map("notifications")
+}
